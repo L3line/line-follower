@@ -4,12 +4,12 @@ import scipy.optimize
 import matplotlib.pyplot as plt
 
 def posCalc(V, pos):
-    print("blah")
+    #print("blah")
     Vr = V[0]
     Vl = V[1]
     dt = V[2]
     l = 1
-    print(Vr, Vl, dt, pos)
+    #print(Vr, Vl, dt, pos)
     
     if Vr == Vl:
         xNew = pos[0] + (Vr * dt * np.cos(pos[2]))
@@ -30,9 +30,9 @@ def posCalc(V, pos):
         temp = np.array([pos[0]-ICC[0],
                          pos[1]-ICC[1],
                          pos[2]])
-        print(temp, transfmat)
-        posNew = np.dot(transfmat,np.transpose(temp)) + ICC
-                           
+        #print("\n temp", temp, "\n" ,transfmat)
+        posNew = np.dot(transfmat,temp) + ICC
+        #print("\n", ICC, "\n\n", posNew)                   
     
     if posNew[2] > 2*np.pi:
         #Case theta out of range
@@ -49,25 +49,28 @@ def errorCalc(V, current_coord, target, weighting, motions):
     '''Inputs: Wheel velocity and facing angle [Vr[motions],Vl[motions],dt[motions]], current position [X, Y, theta], desired position [X, Y, theta] and number of time step.
        Return: Error between current position after all time steps and target position, with time as a consideration.  
     '''
-    vShaped = np.reshape(V, (motions,3))
-    guessPos = np.zeros([motions, 3])
-    
-    
+    vShaped = np.reshape(V, (motions,-1))    
+#    print("\n", vShaped,
+#          "\n", current_coord,
+#          "\n", target,
+#          "\n", weighting, 
+#          "\n", motions)
     
     for i in range(motions):
         current_coord = posCalc(vShaped[i], current_coord)
+    
         
     distWeight = np.exp(-(((current_coord[0] - target[0])**2) + ((current_coord[1] - target[1])**2)))
-    weighting[2] = distWeight * weighting[2]     
-    error = guessPos[i,:] - target
-    
+    weighting[2] = distWeight * weighting[2]    
+    error = current_coord - target
+     
 
     if error[2] > np.pi:
         error[2] = error[2] - 2*np.pi
     elif error[2] < -np.pi:
         error[2] = error[2] + 2*np.pi 
              
-    weightedTime = 0.01*distWeight*np.sum(vShaped[:,2])
+    weightedTime = 0#0.01*distWeight*np.sum(vShaped[:,2])
     weightedError = np.multiply(error, weighting)
     finalError = np.linalg.norm(weightedError)  + weightedTime
                                
@@ -82,7 +85,7 @@ def routeCalculation(vel, targetArray, coord, allbounds, motions, overallSteps, 
 
     while pointNo < overallSteps :
         
-        #print("\nPos before step: ", coord,
+#        print("\nPos before step: ", coord,
 #              "\nvel before step: ", vel,
 #              "\ntarget before step: ", target,
 #              "\nweighting before step", weighting,
@@ -100,11 +103,13 @@ def routeCalculation(vel, targetArray, coord, allbounds, motions, overallSteps, 
         #print("danger")
         for i in range(motions):
             coord = posCalc(temp[i], coord)
-            
+        
+        print("\nPos after step: ", coord)
+        
         stepNo = stepNo + 1 
         
-        if stepNo > 10:
-            #print("\nI have failed\n")
+        if stepNo > 9:
+            print("\nI have failed\n")
             break
                                             
         if (result.fun < tolerance) and (pointNo < overallSteps-1):
@@ -115,6 +120,7 @@ def routeCalculation(vel, targetArray, coord, allbounds, motions, overallSteps, 
             #print("New target: ", target)
         elif (result.fun < tolerance) and (pointNo == overallSteps -1):
             pointNo = pointNo + 1
+            print("I have succeeded")
     
         
         
@@ -124,23 +130,30 @@ def routeCalculation(vel, targetArray, coord, allbounds, motions, overallSteps, 
 '''Code Begins Here'''
 #Variable declaration
 motions = 3 #Do not change this
-tolerance = 1
+tolerance = 0.1
 
 #for i in range(6):
 #    for j in range(6):
-targetArray = [[20, 20, 0.9]]
+targetArray = np.array([[1, 1, 0.7], 
+                        [1, 2, np.pi/2], 
+                        [0, 2, np.pi],
+                        [3, 2, 0]])
 overallSteps = len(targetArray)
                    
-coord = np.array([[0.0],[0.0],[0.0]])
-vel = np.ones([motions*3, 1])
-vel [1] = 1
+coord = np.array([0.0 ,0.0 ,0.0])
+vel = np.ones(motions*3)
+vel[1] = 0
 v_bounds = (-3, 3)
-t_bounds = (0, 100)
+t_bounds = (0, 1)
 allBounds = [v_bounds, v_bounds, t_bounds] * motions
                     
-weighting = np.array([[1],[1],[1]])
+weighting = np.array([1,1,1])
         
-        #guessPos = np.zeros([overallSteps, 3])
+#guessPos = np.zeros([overallSteps, 3])
+
+
+#test = errorCalc(vel,coord , targetArray[0], weighting, motions)
+
         
 if __name__ == "__main__":
         
@@ -152,8 +165,11 @@ if __name__ == "__main__":
     print("End")
     
 
-coord = [[0], [0], [0]]    
+  
 plt.plot(coord[0],coord[1], 'ro')
+
+
+vToMotor[:, 2] = vToMotor[:, 2]/15
 #For viewing plot
 for i in range(len(vToMotor)):
 #    dt = vToMotor[i, 2]/15             
@@ -162,34 +178,32 @@ for i in range(len(vToMotor)):
         coord = plotPos
         plt.plot(plotPos[0],plotPos[1], 'ro')
 print(coord)
-       
-#plt.plot(targetArray[0][0], targetArray[0][1], 'bo')
-#plt.plot(targetArray[1][0], targetArray[1][1], 'bo')
-#plt.plot(targetArray[2][0], targetArray[2][1], 'bo')
 plt.show()
 
-#For viewing heat map
-#vel = np.zeros([motions*3, 1])
-#center = [0,0]
-#delta = 0.1
-#area = 5
-#extent = [-area, area, -area, area]
-#v_r = np.arange(center[0]-area, center[0]+area, delta)
-#v_l = np.arange(center[1]-area, center[1]+area, delta)
-#
-#V_R, V_L = np.meshgrid(v_r,v_l)
-#
-#gridresult =np.zeros_like(V_L)
-#
-#shape = V_L.shape
-#for i in range(shape[0]):
-#    for j in range(shape[1]):
-#        vel[0] = v_r[i]
-#        vel[1] = v_l[j]
-#        vel[2] = 1
-#        gridresult[i,j] = errorCalc(vel, coord, targetArray, weighting, motions)
-#        
-#plt.figure()
-#CS = plt.imshow(gridresult,cmap='hot', extent=extent, origin='lower')
-#plt.show()
+##For viewing heat map
+##coord = np.array([[0.0],[0.0],[0.0]])
+##target = targetArray[0]
+##vel = np.zeros([motions*3, 1])
+##center = [0,0]
+##delta = 0.1
+##area = 5
+##extent = [-area, area, -area, area]
+##v_r = np.arange(center[0]-area, center[0]+area, delta)
+##v_l = np.arange(center[1]-area, center[1]+area, delta)
+##
+##V_R, V_L = np.meshgrid(v_r,v_l)
+##
+##gridresult =np.zeros_like(V_L)
+##
+##shape = V_L.shape
+##for i in range(shape[0]):
+##    for j in range(shape[1]):
+##        vel[0] = v_r[i]
+##        vel[1] = v_l[j]
+##        vel[2] = 1
+##        gridresult[i,j] = errorCalc(vel, coord, target, weighting, motions)
+##        
+##plt.figure()
+##CS = plt.imshow(gridresult,cmap='hot', extent=extent, origin='lower')
+##plt.show()
 

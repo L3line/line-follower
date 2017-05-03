@@ -24,7 +24,7 @@ def posCalc(V, pos):
         a = w * dt
         ICC = np.array([pos[0] - R * np.sin(pos[2]),
                         pos[1] + R * np.cos(pos[2]),
-                        a                         ])
+                        a                      ])
 
         transfmat = np.array([[np.cos(a), -np.sin(a), 0],
                               [np.sin(a),  np.cos(a), 0],
@@ -33,7 +33,7 @@ def posCalc(V, pos):
         temp = np.array([pos[0]-ICC[0],
                          pos[1]-ICC[1],
                          pos[2]])
-
+        print("\n Temp: ", temp)
         posNew = np.dot(transfmat,np.transpose(temp)) + ICC
                            
     
@@ -92,10 +92,10 @@ v_bounds = (-3, 3)
 t_bounds = (0, 1)
 allBounds = [v_bounds, v_bounds, t_bounds] * mainMotions
 
-#result = scipy.optimize.minimize(errorCalc, mainPathData, args=(mainStartPos, mainTargetPos,
- #                                mainWeighting, mainMotions), bounds=allBounds)
+result = scipy.optimize.minimize(errorCalc, mainPathData, args=(mainStartPos, mainTargetPos,
+                                mainWeighting, mainMotions), bounds=allBounds)
 #result = errorCalc(mainPathData, mainStartPos, mainTargetPos, mainWeighting, mainMotions)
-#print(result)
+print(result)
 #plotStorage = np.zeros((3, 3))
 #'''For viewing heat map'''
 #for i in range(3):
@@ -103,32 +103,32 @@ allBounds = [v_bounds, v_bounds, t_bounds] * mainMotions
 #    mainStartPos = plotStorage[i]
 #plt.plot(plotStorage[:, 0], plotStorage[:, 1], 'ro')
 #print(plotStorage)
-#vel = np.zeros([mainMotions*3, 1])
-#center = [0,0]
-#delta = 0.1
-#area = 3
-#extent = [-area, area, -area, area]
-#v_r = np.arange(center[0] - area,center[0] + area, delta)
-#v_l = np.arange(center[1] - area,center[1] + area, delta)
-#
-#V_R, V_L = np.meshgrid(v_r,v_l)
-#
-#gridresult =np.zeros_like(V_L)
-#minError = 10
-#
-#shape = V_L.shape
-#for i in range(shape[0]):
-#    for j in range(shape[1]):
-#        mainPathData[0] = v_r[i]
-#        mainPathData[1] = v_l[j]
-#        mainPathData[2] = 1
-#        gridresult[i,j] = errorCalc(mainPathData, mainStartPos, mainTargetPos, mainWeighting, mainMotions)
-#        if minError > gridresult[i, j]:
-#            minError = gridresult[i, j]
-#            pathVr = v_r[i]
-#            pathVl = v_l[j]
-#        
-#plt.figure()
-#CS = plt.imshow(gridresult,cmap='hot', extent=extent, origin='lower')
-#plt.show()
-#print("min error: ", minError, "Vr", pathVr, "Vl", pathVl)
+vel = np.zeros([mainMotions*3, 1])
+center = [0,0]
+delta = 0.1
+area = 3
+extent = [-area, area, -area, area]
+v_r = np.arange(center[0] - area,center[0] + area, delta)
+v_l = np.arange(center[1] - area,center[1] + area, delta)
+
+V_R, V_L = np.meshgrid(v_r,v_l)
+
+gridresult =np.zeros_like(V_L)
+minError = 10
+
+shape = V_L.shape
+for i in range(shape[0]):
+    for j in range(shape[1]):
+        mainPathData[0] = v_r[i]
+        mainPathData[1] = v_l[j]
+        mainPathData[2] = 1
+        gridresult[i,j] = errorCalc(mainPathData, mainStartPos, mainTargetPos, mainWeighting, mainMotions)
+        if minError > gridresult[i, j]:
+            minError = gridresult[i, j]
+            pathVr = v_r[i]
+            pathVl = v_l[j]
+        
+plt.figure()
+CS = plt.imshow(gridresult,cmap='hot', extent=extent, origin='lower')
+plt.show()
+print("min error: ", minError, "Vr", pathVr, "Vl", pathVl)
