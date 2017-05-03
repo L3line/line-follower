@@ -355,3 +355,5 @@ def imgProcess():
             for midpt1 in range(len(midptList_dist)-1): # create array of angles between each midpoint
                 mptheta.append(np.arctan2((midptList_dist[midpt1+1][0][1]-midptList_dist[midpt1][0][1]),(midptList_dist[midpt1+1][0][0]-midptList_dist[midpt1][0][0])))
             mptheta.append(mptheta[len(mptheta)-1])
+            
+    return [midptList_dist, mptheta]
