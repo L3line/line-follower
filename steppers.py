@@ -59,6 +59,8 @@ class stepperDrive(object):
             if not self.interrupt.is_set():
                 lateststep = motor.oneStep(direction, self.style)
                 time.sleep(stepwait)
+            else:
+                break
 
         if (self.style == Adafruit_MotorHAT.MICROSTEP):
             # this is an edge case, if between full steps,just keep going
@@ -79,9 +81,8 @@ class stepperDrive(object):
 
     def drive(self, commands):
         try:
-            while self.driveThread.isalive():
+            while self.driveThread.is_alive():
                 self.interrupt.set()
-                print("driveThread Alive!")
             self.interrupt.clear()
         except:
             pass
@@ -92,6 +93,10 @@ class stepperDrive(object):
 # recommended for auto-disabling motors on shutdown!
 atexit.register(turnOffMotors)
 
+#Testing code, only runs if steppers.py is executed directly
 if __name__ == "__main__":
     drive = stepperDrive()
     drive.drive([[0.01, -0.01, 5]])
+    time.sleep(2)
+    drive.drive([[0.01, 0.01, 5]])
+    time.sleep(10)
