@@ -20,6 +20,7 @@ with PiCamera() as camera:
     rawCapture = PiRGBArray(camera, size=resolution)
     for frame in camera.capture_continuous(rawCapture, format ='bgr', use_video_port = True):
         image = frame.array
+        print("Got image, processing!")
         #########################
         ### findcontours here ###
         #########################
