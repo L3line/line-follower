@@ -1,7 +1,7 @@
 import numpy as np
 import scipy.optimize
 
-L = 144
+L = 1
 motions = 3 #Do not change this
 tolerance = 0.5
 def posCalc(V, pos):
@@ -47,7 +47,7 @@ def posCalc(V, pos):
 
     
 
-def guessVel(target, coord):
+def guessVel(target, coord, bound):
     '''Function returns set of velocities and times in single dimensional array.
        All times are set to 1.
        Function requires single target coordinate, current coordinate and number of steps
@@ -77,8 +77,10 @@ def guessVel(target, coord):
             
     #Step 2
     vel[3] = np.sqrt((target[0]-coord[0])**2+(target[1]-coord[1])**2)
-    if vel[3] > 3:
-              vel[3] = 3
+    if vel[3] > bound[1]:
+        vel[3] = bound[1]
+    if vel[3] < bound[0]:
+        vel[3] = bound[0]
     vel[4] = vel[3]
     
     #Set wheel velocities to move in straight line towards target
@@ -97,8 +99,10 @@ def guessVel(target, coord):
                    
         vel[6] = np.sqrt((target[0]-coord[0])**2+(target[1]-coord[1])**2) 
         
-        if vel[6] > 3:
-            vel[6] = 3
+        if vel[6] > bound[1]:
+            vel[6] = bound[1]
+        if vel[6] < bound[0]:
+            vel[6] = bound[0]
         vel[7] = vel[6]
     else:
         vel[6] = L * (target[2] - travelTheta)/2
@@ -133,7 +137,7 @@ def errorCalc(V, current_coord, target, weighting):
         current_coord = posCalc(vShaped[i], current_coord)
     #calc final position from set of motor instructions  
         
-    distWeight = np.exp(-(((current_coord[0] - target[0])**2) + ((current_coord[1] - target[1])**2)))
+    distWeight = np.exp(-(((current_coord[0] - target[0])**2) + ((current_coord[1] - target[1])**2))/1000**2)
     weighting[2] = distWeight * weighting[2]
     #Produce weighting with theta weighting dependant on x, y distance from target    
     error = current_coord - target
@@ -145,7 +149,7 @@ def errorCalc(V, current_coord, target, weighting):
         error[2] = error[2] + 2*np.pi
     #Ensure theta error in range -pi to pi          
              
-    weightedTime = 0.1*np.sum(vShaped[:,2])*distWeight
+    weightedTime = 1#0.1*np.sum(vShaped[:,2])*distWeight
     weightedError = np.multiply(error, weighting)
     finalError = np.linalg.norm(weightedError)  + weightedTime
     #Final error withweighted x, y, theta considered and weighted total time. Float                           
@@ -169,7 +173,7 @@ def routeCalculation(targetArray, coord, allbounds, overallSteps):
               "\nweighting before step", weighting,
               "\nmotions before step", motions)
 
-        vel = guessVel(target, coord)  
+        vel = guessVel(target, coord, allbounds[0])  
         #Produces an good intital guess for motor instructions. See def guessVel()
         result = scipy.optimize.minimize(errorCalc, vel, args=(coord, target, weighting), bounds=allbounds)
 		#Minimise error for moving towards target in 3 (motions) steps	
@@ -259,8 +263,8 @@ def viewPathPlot(vToMotor, coord, targetArray):
 #Variable declaration
 
 targetArray = np.array([[1, 1, 0.7], 
-                        [2, 1, 5], 
-                        [10, 10, 0.7]])
+                        [2, 2, 5], 
+                        [1, 3, 0.7]])
 overallSteps = len(targetArray)
                    
 coord = np.array([0.0 ,0.0 ,0.0])
@@ -269,7 +273,7 @@ v_bounds = (-3, 3)
 t_bounds = (0, 1)
 allBounds = [v_bounds, v_bounds, t_bounds] * motions
                     
-weighting = np.array([1,1,1])
+weighting = np.array([1,1,0])
         
         
 if __name__ == "__main__":

@@ -2,7 +2,7 @@ import numpy as np
 import scipy.optimize
 import matplotlib.pyplot as plt
 
-L = 1
+L = 144
 motions = 3 #Do not change this
 tolerance = 0.5
 historyForPlot = []
@@ -141,7 +141,7 @@ def errorCalc(V, current_coord, target, weighting):
         current_coord = posCalc(vShaped[i], current_coord)
     #calc final position from set of motor instructions  
         
-    distWeight = np.exp(-(((current_coord[0] - target[0])**2) + ((current_coord[1] - target[1])**2)))
+    distWeight = np.exp(-(((current_coord[0] - target[0])**2) + ((current_coord[1] - target[1])**2))/1000**2)
     weighting[2] = distWeight * weighting[2]
     #Produce weighting with theta weighting dependant on x, y distance from target    
     error = current_coord - target
@@ -303,15 +303,15 @@ def viewPathPlot(vToMotor, coord, targetArray):
 '''Code Begins Here'''
 #Variable declaration
 
-targetArray = np.array([[1, 1, 0.7], 
-                        [-2, 1, 5], 
-                        [0, 0, 2]])
+targetArray = np.array([[100, 100, 0.7], 
+                        [2, 2, 5], 
+                        [1, 3, 0.7]])
 overallSteps = len(targetArray)
                    
 coord = np.array([0.0 ,0.0 ,0.0])
 
-v_bounds = (-3., 3.)
-t_bounds = (0, 1)
+v_bounds = (-10., 10.)
+t_bounds = (0, 100)
 allBounds = [v_bounds, v_bounds, t_bounds] * motions
 graphBounds = [(-3, 3), (-3, 3)]
             
@@ -324,18 +324,18 @@ if __name__ == "__main__":
       
     vToMotor = routeCalculation(targetArray, coord, allBounds, overallSteps)
     
-    for i in range(len(targetArray)):
-        target = targetArray[i]
-        result = scipy.optimize.minimize(modifiedErrorCalc, vel, args=(coord, target, weighting),
-                                         bounds = graphBounds)
-        print(result)
-        historyForPlot.append(result.x)
-        print(historyForPlot)
-    temp = np.array(historyForPlot)  
+#    for i in range(len(targetArray)):
+#        target = targetArray[i]
+#        result = scipy.optimize.minimize(modifiedErrorCalc, vel, args=(coord, target, weighting),
+#                                         bounds = graphBounds)
+#        print(result)
+#        historyForPlot.append(result.x)
+#        print(historyForPlot)
+#    temp = np.array(historyForPlot)  
                       
     #print("To motor: ",vToMotor)
     
-    viewHeatMap(coord, targetArray,temp)
+    #viewHeatMap(coord, targetArray,temp)
     viewPathPlot(vToMotor, coord, targetArray)
     #print("End")
     
