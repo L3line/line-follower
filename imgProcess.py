@@ -374,6 +374,6 @@ def imgProcess(img):
     return [midptList_dist, mptheta] # return list of x and y midpoints and angle list
 
 
-#test:
-img = cv2.imread('test4.jpg',0)
-[midptList_dist, mptheta] = imgProcess(img)
+##test:
+#img = cv2.imread('test4.jpg',0)
+#[midptList_dist, mptheta] = imgProcess(img)
