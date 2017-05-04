@@ -3,20 +3,22 @@ import numpy as np
 import scipy.optimize
 import matplotlib.pyplot as plt
 
+L = 1
+motions = 3 #Do not change this
+tolerance = 0.5
 def posCalc(V, pos):
 
     Vr = V[0]
     Vl = V[1]
     dt = V[2]
-    l = 1
     
     if Vr == Vl:
         xNew = pos[0] + (Vr * dt * np.cos(pos[2]))
         yNew = pos[1] + (Vr * dt * np.sin(pos[2]))
         posNew = np.array([xNew, yNew, pos[2]])
     else:
-        R = (l/2) * (Vl + Vr) / (Vr - Vl)
-        w = (Vr - Vl) /l
+        R = (L/2) * (Vl + Vr) / (Vr - Vl)
+        w = (Vr - Vl) /L
         a = w * dt
         ICC = np.array([pos[0] - R * np.sin(pos[2]),
                         pos[1] + R * np.cos(pos[2]),
@@ -42,9 +44,8 @@ def posCalc(V, pos):
 
     return posNew
 
-def guessVel(target, coord, motions):
+def guessVel(target, coord):
     
-    L = 1
     tempCoord = np.zeros(2)
     vel = np.ones(3*motions)
     
@@ -98,7 +99,7 @@ def guessVel(target, coord, motions):
     return vel
         
 
-def errorCalc(V, current_coord, target, weighting, motions):
+def errorCalc(V, current_coord, target, weighting):
     '''Inputs: Wheel velocity and facing angle [Vr[motions],Vl[motions],dt[motions]], current position [X, Y, theta], desired position [X, Y, theta] and number of time step.
        Return: Error between current position after all time steps and target position, with time as a consideration.  
     '''
@@ -129,7 +130,7 @@ def errorCalc(V, current_coord, target, weighting, motions):
                                
     return finalError
 
-def routeCalculation(targetArray, coord, allbounds, motions, overallSteps, tolerance):
+def routeCalculation(targetArray, coord, allbounds, overallSteps):
     
     pointNo = 0
     stepNo = 0
@@ -143,9 +144,9 @@ def routeCalculation(targetArray, coord, allbounds, motions, overallSteps, toler
 #              "\ntarget before step: ", target,
 #              "\nweighting before step", weighting,
 #              "\nmotions before step", motions)
-        vel = guessVel(target, coord, motions)  
+        vel = guessVel(target, coord)  
         
-        result = scipy.optimize.minimize(errorCalc, vel, args=(coord, target, weighting, motions), bounds=allbounds)      
+        result = scipy.optimize.minimize(errorCalc, vel, args=(coord, target, weighting), bounds=allbounds)      
         vel = result.x
         temp = np.reshape(result.x, (motions, 3))
         print(result)
@@ -196,7 +197,7 @@ def viewHeatMap(coord, targetArray):
                 vel[0] = v_r[i]
                 vel[1] = v_l[j]
                 vel[2] = 1
-                gridresult[i,j] = errorCalc(vel, coord, target, weighting, motions)
+                gridresult[i,j] = errorCalc(vel, coord, target, weighting)
                 
         plt.figure()
         CS = plt.imshow(gridresult,cmap='hot', extent=extent, origin='lower')
@@ -219,8 +220,6 @@ def viewPathPlot(vToMotor, coord):
     
 '''Code Begins Here'''
 #Variable declaration
-motions = 3 #Do not change this
-tolerance = 0.5
 
 targetArray = np.array([[1, 1, 0.7], 
                         [2, 1, 5], 
@@ -240,7 +239,7 @@ if __name__ == "__main__":
         
     #print("New")
             
-    vToMotor = routeCalculation(targetArray, coord, allBounds, motions, overallSteps, tolerance)
+    vToMotor = routeCalculation(targetArray, coord, allBounds, overallSteps)
             
     print("To motor: ", vToMotor)
     #viewHeatMap(coord, targetArray)
