@@ -18,23 +18,25 @@ motors = steppers.stepperDrive()
 with PiCamera() as camera:
     camera.resolution = resolution
     rawCapture = PiRGBArray(camera, size=resolution)
+    pathHuw = None
     for frame in camera.capture_continuous(rawCapture, format ='bgr', use_video_port = True):
         image = frame.array
         print("Got image, processing!")
         #########################
         ### findcontours here ###
         #########################
-        pathHuw = imgProcess(image)
+        while pathHuw is None:
+            try:
+                pathHuw = imgProcess(image)
+            except:
+                print("Processing Failed!")
+                pass
         locations = np.transpose(pathHuw[0], (1, 0, 2))[0]
-        rotations = np.transpose(pathHuw[1])
+        rotations = pathHuw[1]
         print(locations)
         print(rotations)
-        ######################
-        ### OPENCV + MOTOR ###
-        ###   STUFF HERE   ###
-        ######################
 
-
+        motors.drive([[1,1,1]])
         #cv2.imshow("Image", warpCap)
         #key = cv2.waitKey(1) & 0xFF
         # clear the stream in preparation for the next frame
