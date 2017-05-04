@@ -2,21 +2,23 @@ import numpy as np
 import scipy.optimize
 import matplotlib.pyplot as plt
 
+L = 1
+motions = 3 #Do not change this
+tolerance = 0.5
 def posCalc(V, pos):
 '''Function returns new position after single time step
    from current positon, wheel velocities and time step '''
     Vr = V[0]
     Vl = V[1]
-    dt = V[2] #Assigned for readability
-    l = 1     
+    dt = V[2]
     
     if Vr == Vl: #Case wheel velocities same. R equals inf. No rotation
         xNew = pos[0] + (Vr * dt * np.cos(pos[2]))
         yNew = pos[1] + (Vr * dt * np.sin(pos[2]))
         posNew = np.array([xNew, yNew, pos[2]])
     else: #Case wheels diff speeds. Will have rotation may also have translation. 
-        R = (l/2) * (Vl + Vr) / (Vr - Vl)
-        w = (Vr - Vl) /l
+        R = (L/2) * (Vl + Vr) / (Vr - Vl)
+        w = (Vr - Vl) /L
         a = w * dt
         ICC = np.array([pos[0] - R * np.sin(pos[2]),
                         pos[1] + R * np.cos(pos[2]),
@@ -42,11 +44,13 @@ def posCalc(V, pos):
 
     return posNew #Returns new position in form (x, y, theta) 
 
-def guessVel(target, coord, motions):
+    
+
+def guessVel(target, coord):
     '''Function returns set of velocities and times in single dimensional array.
        All times are set to 1.
        Function requires single target coordinate, current coordinate and number of steps'''
-    L = 1
+
     tempCoord = np.zeros(2)
     vel = np.ones(3*motions)
     
@@ -109,14 +113,13 @@ def guessVel(target, coord, motions):
         
     return vel #Return list of velocities and time in 1D array. 
         
-
-def errorCalc(V, current_coord, target, weighting, motions):
-    '''Inputs: Wheel velocity and facing angle [Vr[motions],Vl[motions],dt[motions]], 
+def errorCalc(V, current_coord, target, weighting):
+	'''Inputs: Wheel velocity and facing angle [Vr[motions],Vl[motions],dt[motions]], 
        current position [X, Y, theta], desired position [X, Y, theta] and number of time step.
        Return: Error between current position after all time steps and target position,
        with time as a consideration.'''
     vShaped = np.reshape(V, (motions,-1))
-    #Shape motor instructions to have single instruction per row    
+    #Shape motor instructions to have single instruction per row 
 #    print("\n", vShaped,
 #          "\n", current_coord,
 #          "\n", target,
@@ -145,7 +148,7 @@ def errorCalc(V, current_coord, target, weighting, motions):
     #Final error withweighted x, y, theta considered and weighted total time. Float                           
     return finalError #return error as float
 
-def routeCalculation(targetArray, coord, allbounds, motions, overallSteps, tolerance):
+def routeCalculation(targetArray, coord, allbounds, overallSteps):
 '''Calculates route by minimising error for each step towards a target. Function loops through
    until all target have been reached. Function returns n by 3 array of motor instructions
    in the form (Vr,Vl, dt). ''' 
@@ -162,10 +165,12 @@ def routeCalculation(targetArray, coord, allbounds, motions, overallSteps, toler
 #              "\ntarget before step: ", target,
 #              "\nweighting before step", weighting,
 #              "\nmotions before step", motions)
-        vel = guessVel(target, coord, motions)  
+
+        vel = guessVel(target, coord)  
         #Produces an good intital guess for motor instructions. See def guessVel()
-        result = scipy.optimize.minimize(errorCalc, vel, args=(coord, target, weighting, motions), bounds=allbounds)
-        #Minimise error for moving towards target in 3 (motions) steps
+        result = scipy.optimize.minimize(errorCalc, vel, args=(coord, target, weighting), bounds=allbounds)
+		#Minimise error for moving towards target in 3 (motions) steps	
+
         vel = result.x
         temp = np.reshape(result.x, (motions, 3))
         #Format returned motor instructions into more useful shape
@@ -210,7 +215,7 @@ def viewHeatMap(coord, targetArray):
                 vel[0] = v_r[i]
                 vel[1] = v_l[j]
                 vel[2] = 1
-                gridresult[i,j] = errorCalc(vel, coord, target, weighting, motions)
+                gridresult[i,j] = errorCalc(vel, coord, target, weighting)
                 
         plt.figure()
         CS = plt.imshow(gridresult,cmap='hot', extent=extent, origin='lower')
@@ -233,8 +238,6 @@ def viewPathPlot(vToMotor, coord):
     
 '''Code Begins Here'''
 #Variable declaration
-motions = 3 #Do not change this
-tolerance = 0.5
 
 targetArray = np.array([[1, 1, 0.7], 
                         [2, 1, 5], 
@@ -254,7 +257,7 @@ if __name__ == "__main__":
         
     #print("New")
             
-    vToMotor = routeCalculation(targetArray, coord, allBounds, motions, overallSteps, tolerance)
+    vToMotor = routeCalculation(targetArray, coord, allBounds, overallSteps)
             
     print("To motor: ", vToMotor)
     #viewHeatMap(coord, targetArray)
