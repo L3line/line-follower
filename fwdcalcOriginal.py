@@ -246,7 +246,7 @@ def viewPathPlot(vToMotor, coord):
 
 targetArray = np.array([[1, 1, 0.7], 
                         [2, 1, 5], 
-                        [-1, -2, 0]])
+                        [10, 10, 0.7]])
 overallSteps = len(targetArray)
                    
 coord = np.array([0.0 ,0.0 ,0.0])

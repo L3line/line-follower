@@ -45,3 +45,4 @@ with PiCamera() as camera:
         # if the `q` key was pressed, break from the loop
         #if key == ord("q"):
         #    break
+targetArray = np.concatenate((locations, np.array([rotations]).T), axis = 1)
