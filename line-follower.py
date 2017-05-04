@@ -24,8 +24,11 @@ with PiCamera() as camera:
         #########################
         ### findcontours here ###
         #########################
-        path = imgProcess(image)
-        print(path)
+        pathHuw = imgProcess(image)
+        locations = np.transpose(pathHuw[0], (1, 0, 2))[0]
+        rotations = np.transpose(pathHuw[1])
+        print(locations)
+        print(rotations)
         ######################
         ### OPENCV + MOTOR ###
         ###   STUFF HERE   ###
