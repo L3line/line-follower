@@ -6,8 +6,10 @@ L = 1
 motions = 3 #Do not change this
 tolerance = 0.5
 def posCalc(V, pos):
-'''Function returns new position after single time step
-   from current positon, wheel velocities and time step '''
+    '''Function returns new position after single time step
+       from current positon, wheel velocities and time step 
+       
+    '''
     Vr = V[0]
     Vl = V[1]
     dt = V[2]
@@ -49,7 +51,8 @@ def posCalc(V, pos):
 def guessVel(target, coord):
     '''Function returns set of velocities and times in single dimensional array.
        All times are set to 1.
-       Function requires single target coordinate, current coordinate and number of steps'''
+       Function requires single target coordinate, current coordinate and number of steps
+    '''
 
     tempCoord = np.zeros(2)
     vel = np.ones(3*motions)
@@ -114,10 +117,11 @@ def guessVel(target, coord):
     return vel #Return list of velocities and time in 1D array. 
         
 def errorCalc(V, current_coord, target, weighting):
-	'''Inputs: Wheel velocity and facing angle [Vr[motions],Vl[motions],dt[motions]], 
+    '''Inputs: Wheel velocity and facing angle [Vr[motions],Vl[motions],dt[motions]], 
        current position [X, Y, theta], desired position [X, Y, theta] and number of time step.
        Return: Error between current position after all time steps and target position,
-       with time as a consideration.'''
+       with time as a consideration.
+    '''
     vShaped = np.reshape(V, (motions,-1))
     #Shape motor instructions to have single instruction per row 
 #    print("\n", vShaped,
@@ -149,9 +153,10 @@ def errorCalc(V, current_coord, target, weighting):
     return finalError #return error as float
 
 def routeCalculation(targetArray, coord, allbounds, overallSteps):
-'''Calculates route by minimising error for each step towards a target. Function loops through
-   until all target have been reached. Function returns n by 3 array of motor instructions
-   in the form (Vr,Vl, dt). ''' 
+    '''Calculates route by minimising error for each step towards a target. Function loops through
+       until all target have been reached. Function returns n by 3 array of motor instructions
+       in the form (Vr,Vl, dt).
+    ''' 
     
     pointNo = 0
     stepNo = 0
@@ -261,7 +266,7 @@ if __name__ == "__main__":
             
     print("To motor: ", vToMotor)
     #viewHeatMap(coord, targetArray)
-    #(vToMotor, coord)
+    viewPathPlot(vToMotor, coord)
     #print("End")
     
 
