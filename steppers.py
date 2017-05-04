@@ -1,18 +1,17 @@
 #!/usr/bin/python3
 from Adafruit_MotorHAT import Adafruit_MotorHAT, \
                               Adafruit_DCMotor, \
-                              Adafruit_StepperMotor, \
-                              MICROSTEP, \
-                              SINGLE, \
-                              DOUBLE, \
-                              INTERLEAVE
+                              Adafruit_StepperMotor
 import time
 import atexit
 import threading
 import numpy as np
 
 mh = Adafruit_MotorHAT(addr=0x60)
-
+INTERLEAVE = Adafruit_MotorHAT.INTERLEAVE
+SINGLE = Adafruit_MotorHAT.SINGLE
+DOUBLE = Adafruit_MotorHAT.DOUBLE
+MICROSTEP = Adafruit_MotorHAT.MICROSTEP
 
 def turnOffMotors():
     mh.getMotor(1).run(Adafruit_MotorHAT.RELEASE)
