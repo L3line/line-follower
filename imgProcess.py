@@ -1,5 +1,6 @@
 import cv2
 import random
+#import time
 import numpy as np
 from scipy.spatial import distance
 from scipy import spatial
@@ -7,6 +8,7 @@ from random import randint
 
 # Real function of canny.py. implement this file
 
+#start_time = time.time()
 
 def imgProcess(img):
     # NEED TO SAVE AS SAME THING EACH TIME, 0 converts to grayscale
@@ -16,32 +18,36 @@ def imgProcess(img):
     dim = (400, int(img.shape[0] * r))
 
     # perform the actual resizing of the image and show it
-    kSize = 10
+    kSize = 3
     kernel = np.ones((kSize, kSize), np.uint8)
+    resized = cv2.resize(img, dim, interpolation=cv2.INTER_AREA)
     # smoothed = cv2.filter2D(img, -1, kernel) # Smooth image with 15x15 array
-    opening = cv2.morphologyEx(img, cv2.MORPH_CLOSE, kernel)
+    opening = cv2.morphologyEx(resized, cv2.MORPH_CLOSE, kernel)
     # Resize image
-    resized = cv2.resize(opening, dim, interpolation=cv2.INTER_AREA)
+    
 
     # cv2.imwrite('Resized.jpg', resized)
 
     # apply automatic Canny edge detection using the computed median
     # Define automatic upper and lower thresholds for Canny detection
-    v = np.median(resized)
+    v = np.median(opening)
     sigma = 0.333
     lower = int(max(0, (1.0 - sigma) * v))
     upper = int(min(255, (1.0 + sigma) * v))
-    edges = cv2.Canny(resized, lower, upper)  # Perform Canny Edge Detection
+    edges = cv2.Canny(opening, lower, upper)  # Perform Canny Edge Detection
     # edge_save = cv2.imwrite('edged.jpg', edges)
 
     # Resized colour version of original image
-    # smallColr= cv2.resize(colr, dim, interpolation = cv2.INTER_AREA)
+    smallColr= cv2.resize(img, dim, interpolation = cv2.INTER_AREA)
     # cv2.imshow('Edges', edges)
 
     # Find contours in canny image
     image, contours, hierarchy = cv2.findContours(edges,
                                                   cv2.RETR_TREE,
                                                   cv2.CHAIN_APPROX_SIMPLE)
+    showcontours = cv2.drawContours(smallColr,contours,-1,(0, 255, 0),3)
+    #cv2.imwrite('origcontours.jpg', showcontours)
+    #cv2.imshow('original contours',showcontours)
     # for i in range(len(contours)):
     #     color = np.random.rand(3) * 255
     #     cnt_img = cv2.drawContours(cnt_img, contours, i, color, 3)
@@ -60,9 +66,11 @@ def imgProcess(img):
 
     # duplicate contours list and remove any contours that are too short
     contours_shorten = list(contours)
+
     minLength = 19
     # remove any small contours (typically errors)
     for cont in range(len(contours)):
+      
         if len(contours[cont]) < minLength:
             contours_shorten.remove(contours[cont])
 
@@ -110,7 +118,9 @@ def imgProcess(img):
     clcont = []
 
     if len(closestContours) == 0:  # Not on line
+       
         if len(contours) >= 1:
+         
             for k in range(len(contours)):  # iterate through list of contours
                 clcont.append(abs(cv2.pointPolygonTest(contours[k], (200, 299), True)))  # calculate the distance between bottom centre of image and contour
             followContour = clcont.index(min(clcont))  # find the contour with the shortest distance from point
@@ -150,13 +160,14 @@ def imgProcess(img):
        # Go to Nessa's code to move  robot to locate new contour
 
     if len(closestContours)==1: # Can only see one contour, choose points on this line to follow
-        randpoint = [500, 300]
+      
+        randpoint = [200, 150]
         p = [0, 0]
-        while distance.euclidean(p, randpoint) >= 150 or distance.euclidean(p, randpoint) <= 30: # choose random point on contour thats not too close or too far
+        while distance.euclidean(p, randpoint) >= 250 or distance.euclidean(p, randpoint) <= 3: # choose random point on contour thats not too close or too far
             randindex = randint(0, len(contours[closestContours[0]])-1) # start by choosing random index on closest contour 
             randpoint = contours[closestContours[0]][randindex][0] # and then find the corresponding point and check the distance
-
-
+    
+       
        # we choose just a few points so that if there is only one horizontal contour the robot can see, it doesnt choose points along the line 
        # on both sides of the robot, as we dont want it to try and go in two different directions
         for k in range(-2, 2): # Again choose 2 points either side of chosen point
@@ -179,14 +190,16 @@ def imgProcess(img):
         # cv2.polylines(cnt_img2, np.int32([midptList_dist]), True, (0, 255, 255), 1)
         # cv2.namedWindow('midpoints')
         # cv2.imshow('midpoints', cnt_img2)
-
+   
 
         for midpt1 in range(len(midptList_dist)-1): # create array of angles between each midpoint
         # calculate angle between each transformed midpoint - gives real life angle
             mptheta.append(np.arctan2((midptList_dist[midpt1+1][0][1]-midptList_dist[midpt1][0][1]), (midptList_dist[midpt1+1][0][0]-midptList_dist[midpt1][0][0])))
         mptheta.append(mptheta[len(mptheta)-1])
-
+      
+        
     if len(closestContours)==2: # If two contours are close to robot, then track both
+     
         # Pick one of the two contours to follow at random
         followContour = random.choice(closestContours) # choose one of two contours to follow at random
         # print(followContour)
@@ -238,6 +251,7 @@ def imgProcess(img):
     
     
     if len(closestContours)==3: # 3 contours found in radius i.e. t junction
+  
         dist3 = []
         randcont = []
     # ** Old Code **
@@ -305,25 +319,27 @@ def imgProcess(img):
         b = b.astype(float)
         midptList_dist = cv2.perspectiveTransform(b, h) # apply perspective transforms to midpoints
         midptList_dist = midptList_dist.reshape((-1, 1, 2))
-        # cv2.polylines(cnt_img2, np.int32([midptList_dist]), True, (0, 255, 255), 1)
+        #cv2.polylines(cnt_img2, np.int32([midptList_dist]), True, (0, 255, 255), 1)
 
         for midpt1 in range(len(midptList_dist)-1): # create array of angles between each midpoint
         # find angle between each midpoint
             mptheta.append(np.arctan2((midptList_dist[midpt1+1][0][1]-midptList_dist[midpt1][0][1]), (midptList_dist[midpt1+1][0][0]-midptList_dist[midpt1][0][0])))
         mptheta.append(mptheta[len(mptheta)-1])
 
-        # cv2.namedWindow('midpoints')
+        #cv2.namedWindow('midpoints')
         # cv2.imshow('midpoints', cnt_img2)
+        #cv2.imwrite('midpointsnew',)
 
 
 
     if len(closestContours) >3:
+   
         for k  in range(len(contours)): # iterate through contours
             clcont.append(abs(cv2.pointPolygonTest(contours[k], (200, 299), True))) # create array of distances between robot and each contour
             followContour = clcont.index(min(clcont)) # choose the closest contour to follow
             randpoint = [0, 0]
             p =[200, 299]
-            while distance.euclidean(p, randpoint) >= 150 or distance.euclidean(p, randpoint) <= 30:
+            while distance.euclidean(p, randpoint) >= 250 or distance.euclidean(p, randpoint) <= 30:
                 randindex = randint(0, len(contours[followContour])-1)
                 randpoint = contours[followContour][randindex][0]
 
@@ -351,5 +367,13 @@ def imgProcess(img):
             for midpt1 in range(len(midptList_dist)-1): # create array of angles between each midpoint
                 mptheta.append(np.arctan2((midptList_dist[midpt1+1][0][1]-midptList_dist[midpt1][0][1]), (midptList_dist[midpt1+1][0][0]-midptList_dist[midpt1][0][0])))
             mptheta.append(mptheta[len(mptheta)-1])
+    
 
+#    end_time = time.time()-start_time
+#    print('time taken: %s'%end_time)
     return [midptList_dist, mptheta] # return list of x and y midpoints and angle list
+
+
+##test:
+#img = cv2.imread('test4.jpg',0)
+#[midptList_dist, mptheta] = imgProcess(img)
