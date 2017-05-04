@@ -30,12 +30,13 @@ with PiCamera() as camera:
                 pathHuw = imgProcess(image)
             except:
                 print("Processing Failed!")
+                rawCapture.truncate(0)
                 continue
         locations = np.transpose(pathHuw[0], (1, 0, 2))[0]
         rotations = pathHuw[1]
         print(locations)
         print(rotations)
-
+        targetArray = np.concatenate((locations, np.array([rotations]).T), axis = 1)
         motors.drive([[1,1,1]])
         #cv2.imshow("Image", warpCap)
         #key = cv2.waitKey(1) & 0xFF
