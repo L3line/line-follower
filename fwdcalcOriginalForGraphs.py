@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 L = 1
 motions = 3 #Do not change this
 tolerance = 0.5
+historyForPlot = []
+
 def posCalc(V, pos):
     '''Function returns new position after single time step
        from current positon, wheel velocities and time step 
@@ -18,6 +20,7 @@ def posCalc(V, pos):
         xNew = pos[0] + (Vr * dt * np.cos(pos[2]))
         yNew = pos[1] + (Vr * dt * np.sin(pos[2]))
         posNew = np.array([xNew, yNew, pos[2]])
+#        print("\nposNew", posNew)
     else: #Case wheels diff speeds. Will have rotation may also have translation. 
         R = (L/2) * (Vl + Vr) / (Vr - Vl)
         w = (Vr - Vl) /L
@@ -35,6 +38,10 @@ def posCalc(V, pos):
                          pos[2]])
 
         posNew = np.dot(transfmat,temp) + ICC
+#        print("\nICC", ICC,
+#              "\ntransmat", transfmat,
+#              "\ntemp", temp,
+#              "\nposNew", posNew)    
                                
     if posNew[2] > 2*np.pi:
         #Case theta out of range. Ensures theta between 0-2pi
@@ -43,7 +50,7 @@ def posCalc(V, pos):
     if posNew[2] < 0 :
         while posNew[2] < 0:
             posNew[2] = posNew[2] + 2*np.pi
-
+    #print(posNew)
     return posNew #Returns new position in form (x, y, theta) 
 
     
@@ -151,6 +158,33 @@ def errorCalc(V, current_coord, target, weighting):
     finalError = np.linalg.norm(weightedError)  + weightedTime
     #Final error withweighted x, y, theta considered and weighted total time. Float                           
     return finalError #return error as float
+    
+def modifiedErrorCalc(V, current_coord, target, weighting):
+    '''Inputs: Wheel velocity and facing angle [Vr, Vl], 
+       current position [X, Y, theta], desired position [X, Y, theta] and error weightings.
+       Return: Error between current position and target positionafter single time step.
+    '''
+    
+    current_coord = posCalc(np.array([V[0], V[1], 1]), current_coord)
+    #calc final position from set of motor instructions  
+        
+    distWeight = np.exp(-(((current_coord[0] - target[0])**2) + ((current_coord[1] - target[1])**2)))
+    weighting[2] = distWeight * weighting[2]
+    #Produce weighting with theta weighting dependant on x, y distance from target    
+    error = current_coord - target
+    #Unweighted error 
+
+    if error[2] > np.pi:
+        error[2] = error[2] - 2*np.pi
+    elif error[2] < -np.pi:
+        error[2] = error[2] + 2*np.pi
+    #Ensure theta error in range -pi to pi          
+             
+    weightedError = np.multiply(error, weighting)
+    finalError = np.linalg.norm(weightedError)
+    #print("\nV", V, "\nError", finalError, "\nCurrent coord", current_coord)
+    #Final error withweighted x, y, theta considered.. Float                           
+    return finalError #return error as float
 
 def routeCalculation(targetArray, coord, allbounds, overallSteps):
     '''Calculates route by minimising error for each step towards a target. Function loops through
@@ -171,7 +205,8 @@ def routeCalculation(targetArray, coord, allbounds, overallSteps):
 #              "\nweighting before step", weighting,
 #              "\nmotions before step", motions)
 
-        vel = guessVel(target, coord)  
+        vel = guessVel(target, coord)
+        #print("\nVel: ", vel)
         #Produces an good intital guess for motor instructions. See def guessVel()
         result = scipy.optimize.minimize(errorCalc, vel, args=(coord, target, weighting), bounds=allbounds)
 		#Minimise error for moving towards target in 3 (motions) steps	
@@ -198,9 +233,10 @@ def routeCalculation(targetArray, coord, allbounds, overallSteps):
     
     return np.array(vToMotor) #Return array of n rows and 3 cols. (Vr, Vl, dt)
 
-def viewHeatMap(coord, targetArray):
+def viewHeatMap(coord, targetArray, result):
     '''Function prints heatmap for each target assuming a single step of one second is made'''
-    vel = np.zeros([motions*3, 1])
+    print(result)
+    vel = np.zeros(2)
     center = [0,0]
     delta = 0.1
     area = 5
@@ -219,15 +255,22 @@ def viewHeatMap(coord, targetArray):
             for j in range(shape[1]):
                 vel[0] = v_r[i]
                 vel[1] = v_l[j]
-                vel[2] = 1
-                gridresult[i,j] = errorCalc(vel, coord, target, weighting)
+                gridresult[i,j] = modifiedErrorCalc(vel, coord, target, weighting)
                 
         plt.figure()
+        plt.ylabel('Right Wheel Velocity')
+        plt.xlabel('Left Wheel Velocity')
+        plt.title('Heat map of error assuming single time step of 1s')
         CS = plt.imshow(gridresult,cmap='hot', extent=extent, origin='lower')
+        plt.annotate('Solution', xy=(result[n][1], result[n][0]),
+                     xytext=(result[n][1] - 1 , result[n][0]-2),
+                     arrowprops=dict(facecolor='white', shrink=0.1),)
+        plt.colorbar(CS)
         plt.show()
         
 def viewPathPlot(vToMotor, coord, targetArray):
     '''Function plots path in x, y taken by robot'''
+    plt.figure()
     plt.plot(coord[0],coord[1], 'ro')
     
     
@@ -245,15 +288,15 @@ def viewPathPlot(vToMotor, coord, targetArray):
     
     
     plt.annotate('target 1', xy=(targetArray[0, 0], targetArray[0, 1]),
-                     xytext=(targetArray[0, 0], targetArray[0, 1] + 2),
+                     xytext=(targetArray[0, 0], targetArray[0, 1] + 0.1),
                      arrowprops=dict(facecolor='black', shrink=0.1),)
     
     plt.annotate('target 2', xy=(targetArray[1, 0], targetArray[1, 1]),
-                     xytext=(targetArray[1, 0] + 2, targetArray[1, 1]),
+                     xytext=(targetArray[1, 0], targetArray[1, 1] + 0.1),
                      arrowprops=dict(facecolor='black', shrink=0.1),)
     
     plt.annotate('target 3', xy=(targetArray[2, 0], targetArray[2, 1]),
-                     xytext=(targetArray[2, 0] + 2, targetArray[2, 1]),
+                     xytext=(targetArray[2, 0] + 0.5, targetArray[2, 1]),
                      arrowprops=dict(facecolor='black', shrink=0.1),)        
     plt.show()
     
@@ -261,27 +304,38 @@ def viewPathPlot(vToMotor, coord, targetArray):
 #Variable declaration
 
 targetArray = np.array([[1, 1, 0.7], 
-                        [2, 1, 5], 
-                        [10, 10, 0.7]])
+                        [-2, 1, 5], 
+                        [0, 0, 2]])
 overallSteps = len(targetArray)
                    
 coord = np.array([0.0 ,0.0 ,0.0])
 
-v_bounds = (-3, 3)
+v_bounds = (-3., 3.)
 t_bounds = (0, 1)
 allBounds = [v_bounds, v_bounds, t_bounds] * motions
-                    
+graphBounds = [(-3, 3), (-3, 3)]
+            
 weighting = np.array([1,1,1])
-        
+vel = np.array([1, -1])        
         
 if __name__ == "__main__":
         
     #print("New")
-            
+      
     vToMotor = routeCalculation(targetArray, coord, allBounds, overallSteps)
-            
-    print("To motor: ", vToMotor)
-    #viewHeatMap(coord, targetArray)
+    
+    for i in range(len(targetArray)):
+        target = targetArray[i]
+        result = scipy.optimize.minimize(modifiedErrorCalc, vel, args=(coord, target, weighting),
+                                         bounds = graphBounds)
+        print(result)
+        historyForPlot.append(result.x)
+        print(historyForPlot)
+    temp = np.array(historyForPlot)  
+                      
+    #print("To motor: ",vToMotor)
+    
+    viewHeatMap(coord, targetArray,temp)
     viewPathPlot(vToMotor, coord, targetArray)
     #print("End")
     
