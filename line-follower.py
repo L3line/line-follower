@@ -30,7 +30,7 @@ with PiCamera() as camera:
                 pathHuw = imgProcess(image)
             except:
                 print("Processing Failed!")
-                pass
+                continue
         locations = np.transpose(pathHuw[0], (1, 0, 2))[0]
         rotations = pathHuw[1]
         print(locations)
@@ -45,4 +45,3 @@ with PiCamera() as camera:
         # if the `q` key was pressed, break from the loop
         #if key == ord("q"):
         #    break
-targetArray = np.concatenate((locations, np.array([rotations]).T), axis = 1)
