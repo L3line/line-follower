@@ -1,8 +1,7 @@
 import numpy as np
 import scipy.optimize
-import matplotlib.pyplot as plt
 
-L = 1
+L = 144
 motions = 3 #Do not change this
 tolerance = 0.5
 def posCalc(V, pos):
@@ -165,11 +164,10 @@ def routeCalculation(targetArray, coord, allbounds, overallSteps):
 
     while pointNo < overallSteps :
     #Loops while the number of targets reached is less than the total number of targets     
-#        print("\nPos before step: ", coord,
-#              "\nvel before step: ", vel,
-#              "\ntarget before step: ", target,
-#              "\nweighting before step", weighting,
-#              "\nmotions before step", motions)
+        print("\nPos before step: ", coord,
+              "\ntarget before step: ", target,
+              "\nweighting before step", weighting,
+              "\nmotions before step", motions)
 
         vel = guessVel(target, coord)  
         #Produces an good intital guess for motor instructions. See def guessVel()
@@ -276,6 +274,7 @@ weighting = np.array([1,1,1])
         
 if __name__ == "__main__":
         
+    import matplotlib.pyplot as plt
     #print("New")
             
     vToMotor = routeCalculation(targetArray, coord, allBounds, overallSteps)
