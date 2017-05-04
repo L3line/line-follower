@@ -1,4 +1,3 @@
 *.swp
-*.png
 *.png~
-*.jpg
+__pycache__/
