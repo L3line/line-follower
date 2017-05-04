@@ -116,6 +116,7 @@ def imgProcess(img):
     midpointy = []
     mptheta = []
     clcont = []
+    #print(len(closestContours))
 
     if len(closestContours) == 0:  # Not on line
        
@@ -124,11 +125,11 @@ def imgProcess(img):
             for k in range(len(contours)):  # iterate through list of contours
                 clcont.append(abs(cv2.pointPolygonTest(contours[k], (200, 299), True)))  # calculate the distance between bottom centre of image and contour
             followContour = clcont.index(min(clcont))  # find the contour with the shortest distance from point
-            randpoint = [0, 0]
+            #randpoint = [0, 0]
             p = [200, 299]
-            while distance.euclidean(p, randpoint) >= 150 or distance.euclidean(p, randpoint) <= 30:  # choose a random point on contour
-                randindex = randint(0, len(contours[followContour])-1)
-                randpoint = contours[followContour][randindex][0]
+            #while distance.euclidean(p, randpoint) >= 150 or distance.euclidean(p, randpoint) <= 30:  # choose a random point on contour
+            randindex = randint(0, len(contours[followContour])-1)
+            randpoint = contours[followContour][randindex][0]
 
 
             for k in range(-2, 2): # choose 2 points either side of chosen point
@@ -160,14 +161,14 @@ def imgProcess(img):
        # Go to Nessa's code to move  robot to locate new contour
 
     if len(closestContours)==1: # Can only see one contour, choose points on this line to follow
-      
-        randpoint = [200, 150]
+        
+        #randpoint = [200, 150]
         p = [0, 0]
-        while distance.euclidean(p, randpoint) >= 250 or distance.euclidean(p, randpoint) <= 3: # choose random point on contour thats not too close or too far
-            randindex = randint(0, len(contours[closestContours[0]])-1) # start by choosing random index on closest contour 
-            randpoint = contours[closestContours[0]][randindex][0] # and then find the corresponding point and check the distance
+        #while distance.euclidean(p, randpoint) >= 550 or distance.euclidean(p, randpoint) <= 3: # choose random point on contour thats not too close or too far
+        randindex = randint(0, len(contours[closestContours[0]])-1) # start by choosing random index on closest contour 
+        randpoint = contours[closestContours[0]][randindex][0] # and then find the corresponding point and check the distance
     
-       
+        
        # we choose just a few points so that if there is only one horizontal contour the robot can see, it doesnt choose points along the line 
        # on both sides of the robot, as we dont want it to try and go in two different directions
         for k in range(-2, 2): # Again choose 2 points either side of chosen point
@@ -337,11 +338,11 @@ def imgProcess(img):
         for k  in range(len(contours)): # iterate through contours
             clcont.append(abs(cv2.pointPolygonTest(contours[k], (200, 299), True))) # create array of distances between robot and each contour
             followContour = clcont.index(min(clcont)) # choose the closest contour to follow
-            randpoint = [0, 0]
+            #randpoint = [0, 0]
             p =[200, 299]
-            while distance.euclidean(p, randpoint) >= 250 or distance.euclidean(p, randpoint) <= 30:
-                randindex = randint(0, len(contours[followContour])-1)
-                randpoint = contours[followContour][randindex][0]
+            #while distance.euclidean(p, randpoint) >= 250 or distance.euclidean(p, randpoint) <= 30:
+            randindex = randint(0, len(contours[followContour])-1)
+            randpoint = contours[followContour][randindex][0]
 
 
             for k in range(-2, 2): # choose some points on the closest contour to follow
@@ -370,10 +371,10 @@ def imgProcess(img):
     
 
 #    end_time = time.time()-start_time
-#    print('time taken: %s'%end_time)
+    #print('finished')
     return [midptList_dist, mptheta] # return list of x and y midpoints and angle list
 
 
 ##test:
-#img = cv2.imread('test4.jpg',0)
+#img = cv2.imread('test5.jpg',0)
 #[midptList_dist, mptheta] = imgProcess(img)
