@@ -4,12 +4,11 @@ import scipy.optimize
 import matplotlib.pyplot as plt
 
 def posCalc(V, pos):
-    #print("blah")
+
     Vr = V[0]
     Vl = V[1]
     dt = V[2]
     l = 1
-    #print(Vr, Vl, dt, pos)
     
     if Vr == Vl:
         xNew = pos[0] + (Vr * dt * np.cos(pos[2]))
@@ -30,10 +29,9 @@ def posCalc(V, pos):
         temp = np.array([pos[0]-ICC[0],
                          pos[1]-ICC[1],
                          pos[2]])
-        #print("\n temp", temp, "\n" ,transfmat)
+
         posNew = np.dot(transfmat,temp) + ICC
-        #print("\n", ICC, "\n\n", posNew)                   
-    
+                               
     if posNew[2] > 2*np.pi:
         #Case theta out of range
         while posNew[2] > 2*np.pi:
@@ -43,6 +41,61 @@ def posCalc(V, pos):
             posNew[2] = posNew[2] + 2*np.pi
 
     return posNew
+
+def guessVel(target, coord, motions):
+    
+    L = 1
+    tempCoord = np.zeros(2)
+    vel = np.ones(3*motions)
+    
+    #Guess initial value of vel
+    #Step 1
+    travelTheta = np.arctan2(target[1]-coord[1], target[0]-coord[0])
+    print(travelTheta)        
+    vel[0] = L * (travelTheta - coord[2])/2
+    vel[1] = -vel[0]   
+    
+    if travelTheta - coord[2] > np.pi:
+        travelTheta = travelTheta - 2*np.pi
+        vel[0] = -vel[0]
+        vel[1] = -vel[1]
+    elif travelTheta < -np.pi:
+        travelTheta = travelTheta + 2*np.pi
+        vel[0] = -vel[0]
+        vel[1] = -vel[1]
+            
+    #Step 2
+    vel[3] = np.sqrt((target[0]-coord[0])**2+(target[1]-coord[1])**2)
+    if vel[3] > 3:
+              vel[3] = 3
+    vel[4] = vel[3]
+    
+    tempCoord[0] = coord[0] + vel[3]*np.cos(travelTheta)
+    tempCoord[1] = coord[1] + vel[3]*np.sin(travelTheta)
+    
+    #step 3        
+    if ((target[0] - tempCoord[0]) > 0.5) and \
+       ((target[1] - tempCoord[1]) > 0.5):  
+                   
+        vel[6] = np.sqrt((target[0]-coord[0])**2+(target[1]-coord[1])**2) 
+        
+        if vel[6] > 3:
+            vel[6] = 3
+        vel[7] = vel[6]
+    else:
+        vel[6] = L * (target[2] - travelTheta)/2
+        vel[7] = -vel[6]
+        
+        if (travelTheta - target[2]) > np.pi:
+            travelTheta = travelTheta - 2*np.pi
+            vel[6] = -vel[6]
+            vel[7] = -vel[7]
+        elif (travelTheta - target[2]) < -np.pi:
+            travelTheta = travelTheta + 2*np.pi
+            vel[6] = -vel[6]
+            vel[7] = -vel[7]
+        
+    return vel
         
 
 def errorCalc(V, current_coord, target, weighting, motions):
@@ -70,18 +123,18 @@ def errorCalc(V, current_coord, target, weighting, motions):
     elif error[2] < -np.pi:
         error[2] = error[2] + 2*np.pi 
              
-    weightedTime = 0#0.01*distWeight*np.sum(vShaped[:,2])
+    weightedTime = 0.1*np.sum(vShaped[:,2])*distWeight
     weightedError = np.multiply(error, weighting)
     finalError = np.linalg.norm(weightedError)  + weightedTime
                                
     return finalError
 
-def routeCalculation(vel, targetArray, coord, allbounds, motions, overallSteps, tolerance):
+def routeCalculation(targetArray, coord, allbounds, motions, overallSteps, tolerance):
     
     pointNo = 0
     stepNo = 0
     target = targetArray[0]
-    vToMotor = []
+    vToMotor = []        
 
     while pointNo < overallSteps :
         
@@ -90,6 +143,7 @@ def routeCalculation(vel, targetArray, coord, allbounds, motions, overallSteps, 
 #              "\ntarget before step: ", target,
 #              "\nweighting before step", weighting,
 #              "\nmotions before step", motions)
+        vel = guessVel(target, coord, motions)  
         
         result = scipy.optimize.minimize(errorCalc, vel, args=(coord, target, weighting, motions), bounds=allbounds)      
         vel = result.x
@@ -99,18 +153,12 @@ def routeCalculation(vel, targetArray, coord, allbounds, motions, overallSteps, 
         for i in temp:
             vToMotor.append(i)
             
-        #print("\n\ncoord: ", coord)
-        #print("danger")
         for i in range(motions):
             coord = posCalc(temp[i], coord)
         
         print("\nPos after step: ", coord)
         
         stepNo = stepNo + 1 
-        
-        if stepNo > 9:
-            print("\nI have failed\n")
-            break
                                             
         if (result.fun < tolerance) and (pointNo < overallSteps-1):
             #print("Point reached: ", target)
@@ -127,83 +175,83 @@ def routeCalculation(vel, targetArray, coord, allbounds, motions, overallSteps, 
     #print('Final Coord: ', coord)
     return np.array(vToMotor)
 
+def viewHeatMap(coord, targetArray):
+    vel = np.zeros([motions*3, 1])
+    center = [0,0]
+    delta = 0.1
+    area = 5
+    extent = [-area, area, -area, area]
+    v_r = np.arange(center[0]-area, center[0]+area, delta)
+    v_l = np.arange(center[1]-area, center[1]+area, delta)
+    
+    V_R, V_L = np.meshgrid(v_r,v_l)
+    
+    gridresult =np.zeros_like(V_L)
+    for n in range(targetArray.shape[0]):
+        print(n)
+        target = targetArray[n]
+        shape = V_L.shape
+        for i in range(shape[0]):
+            for j in range(shape[1]):
+                vel[0] = v_r[i]
+                vel[1] = v_l[j]
+                vel[2] = 1
+                gridresult[i,j] = errorCalc(vel, coord, target, weighting, motions)
+                
+        plt.figure()
+        CS = plt.imshow(gridresult,cmap='hot', extent=extent, origin='lower')
+        plt.show()
+        
+def viewPathPlot(vToMotor, coord):
+    plt.plot(coord[0],coord[1], 'ro')
+    
+    
+    vToMotor[:, 2] = vToMotor[:, 2]/15
+            
+    print("\n", vToMotor)
+    #For viewing plot
+    for i in range(len(vToMotor)):             
+        for j in range(15):
+            plotPos = posCalc(vToMotor[i], coord)
+            coord = plotPos
+            plt.plot(plotPos[0],plotPos[1], 'ro')
+    plt.show()
+    
 '''Code Begins Here'''
 #Variable declaration
 motions = 3 #Do not change this
-tolerance = 0.1
+tolerance = 0.5
 
-#for i in range(6):
-#    for j in range(6):
 targetArray = np.array([[1, 1, 0.7], 
-                        [1, 2, np.pi/2], 
-                        [0, 2, np.pi],
-                        [3, 2, 0]])
+                        [2, 1, 5], 
+                        [-1, -2, 0]])
 overallSteps = len(targetArray)
                    
 coord = np.array([0.0 ,0.0 ,0.0])
-vel = np.ones(motions*3)
-vel[1] = 0
+
 v_bounds = (-3, 3)
 t_bounds = (0, 1)
 allBounds = [v_bounds, v_bounds, t_bounds] * motions
                     
 weighting = np.array([1,1,1])
         
-#guessPos = np.zeros([overallSteps, 3])
-
-
-#test = errorCalc(vel,coord , targetArray[0], weighting, motions)
-
         
 if __name__ == "__main__":
         
-    print("New")
+    #print("New")
             
-    vToMotor = routeCalculation(vel, targetArray, coord, allBounds, motions, overallSteps, tolerance)
+    vToMotor = routeCalculation(targetArray, coord, allBounds, motions, overallSteps, tolerance)
             
     print("To motor: ", vToMotor)
-    print("End")
+    #viewHeatMap(coord, targetArray)
+    #(vToMotor, coord)
+    #print("End")
     
 
-  
-plt.plot(coord[0],coord[1], 'ro')
 
 
-vToMotor[:, 2] = vToMotor[:, 2]/15
-#For viewing plot
-for i in range(len(vToMotor)):
-#    dt = vToMotor[i, 2]/15             
-    for j in range(15):
-        plotPos = posCalc(vToMotor[i], coord)
-        coord = plotPos
-        plt.plot(plotPos[0],plotPos[1], 'ro')
-print(coord)
-plt.show()
 
-##For viewing heat map
-##coord = np.array([[0.0],[0.0],[0.0]])
-##target = targetArray[0]
-##vel = np.zeros([motions*3, 1])
-##center = [0,0]
-##delta = 0.1
-##area = 5
-##extent = [-area, area, -area, area]
-##v_r = np.arange(center[0]-area, center[0]+area, delta)
-##v_l = np.arange(center[1]-area, center[1]+area, delta)
-##
-##V_R, V_L = np.meshgrid(v_r,v_l)
-##
-##gridresult =np.zeros_like(V_L)
-##
-##shape = V_L.shape
-##for i in range(shape[0]):
-##    for j in range(shape[1]):
-##        vel[0] = v_r[i]
-##        vel[1] = v_l[j]
-##        vel[2] = 1
-##        gridresult[i,j] = errorCalc(vel, coord, target, weighting, motions)
-##        
-##plt.figure()
-##CS = plt.imshow(gridresult,cmap='hot', extent=extent, origin='lower')
-##plt.show()
+
+
+
 
