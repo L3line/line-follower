@@ -8,9 +8,9 @@ from random import randint
 # Real function of canny.py. implement this file
 
 
-def imgProcess():
+def imgProcess(img):
     # NEED TO SAVE AS SAME THING EACH TIME, 0 converts to grayscale
-    img = cv2.imread('test.jpg', 0)
+    # img = cv2.imread('test.jpg', 0)
     # Resize image 300 x 225 pixels params
     r = 400.0 / img.shape[1]
     dim = (400, int(img.shape[0] * r))
@@ -78,10 +78,8 @@ def imgProcess():
         a = a.astype(float)
         # apply perspective transform to each contour
         contour_pertr.append(cv2.perspectiveTransform(a, h))
-        contour_pertr[cont3] = np.reshape(np.ravel(contour_pertr[cont3]), (-1, 1, 2))
         contour_pertr[cont3] = np.reshape(np.ravel(contour_pertr[cont3]), (-1, 2))
         contours_pertrInts.append(cv2.perspectiveTransform(a, h))
-        contours_pertrInts[cont3] = np.reshape(np.ravel(contours_pertrInts[cont3]), (-1, 1, 2))
         contours_pertrInts[cont3] = np.reshape(np.ravel(contours_pertrInts[cont3]), (-1, 2))
         # contours_pertrInts[cont3] = contours_pertrInts[cont3].astype(int)
         # for ind in range(2):
@@ -102,7 +100,7 @@ def imgProcess():
         for point in range(len(contours[i])):  # iterate through the points in each contour
             # find contours with points in middle 165-235 pixels x and bottom 280-300 y - i.e. closest contours
             # thresholds can be changed to ensure just 2 contours are found
-            if 100 <= contours[i][point][0][0] <= 300 and 280<= contours[i][point][0][1] <= 299 and len(contours[i])>=19:
+            if 100 <= contours[i][point][0][0] <= 300 and 280<= contours[i][point][0][1] <= 299:
                 closestContours.append(i) 
                 break
 
