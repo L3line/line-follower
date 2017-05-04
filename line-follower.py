@@ -6,6 +6,7 @@ import numpy as np
 import cv2
 import steppers
 from imgProcess import imgProcess
+import fwdcalcOriginal as pathCalc
 #image = cv2.imread("./photos/25-04-2017_12:46:54.jpg")
 resheight = 600
 reswidth = 800
@@ -14,6 +15,13 @@ reswidth = 800
 #smallimage = cv2.resize(image, (reswidth, resheight))
 #resolution = (3280, 2464)
 resolution = (1640, 1232)
+motions = 3
+MAX_VEL = 10
+MAX_TIME = 30
+V_BOUNDS = (-MAX_VEL, MAX_VEL)
+T_BOUNDS = (0, MAX_TIME)
+allBounds = [V_BOUNDS, V_BOUNDS, T_BOUNDS] * motions
+
 motors = steppers.stepperDrive()
 with PiCamera() as camera:
     camera.resolution = resolution
@@ -34,10 +42,12 @@ with PiCamera() as camera:
                 continue
         locations = np.transpose(pathHuw[0], (1, 0, 2))[0]
         rotations = pathHuw[1]
-        print(locations)
-        print(rotations)
         targetArray = np.concatenate((locations, np.array([rotations]).T), axis = 1)
-        motors.drive([[1,1,1]])
+        route = targetArray[:10]
+        vToMotor = pathCalc.routeCalculation(route, [0,0,0], allBounds, len(route))
+
+        print("To Motors: ", vToMotor)
+        motors.driveBlocking(vToMotor)
         #cv2.imshow("Image", warpCap)
         #key = cv2.waitKey(1) & 0xFF
         # clear the stream in preparation for the next frame

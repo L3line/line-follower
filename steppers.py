@@ -26,7 +26,7 @@ class stepperDrive(object):
     '''
 
     def __init__(self, stepsPerRev=200, style=INTERLEAVE,
-                 wheelRad=0.04, wheelBase=0.144):
+                 wheelRad=40, wheelBase=144):
         self.rightMotor = mh.getStepper(stepsPerRev, 1)
         self.leftMotor = mh.getStepper(stepsPerRev, 2)
         multipliers = {SINGLE: 1,
@@ -58,7 +58,7 @@ class stepperDrive(object):
 
         stepwait = 1/(stepRad*w)
         numSteps = int(duration/stepwait)
-        print(numSteps, stepwait, numSteps*stepwait)
+        # print(numSteps, stepwait, numSteps*stepwait)
         if numSteps == 0:
             return
         for i in range(int(duration/stepwait)):
@@ -80,14 +80,15 @@ class stepperDrive(object):
 
         '''
         for driveCmd in commands:
+            print(driveCmd)
             if not self.interrupt.is_set():
                 self.lDrv = threading.Thread(target=self.stepper_worker,
                                              args=(self.leftMotor,
-                                                   driveCmd[0],
+                                                   driveCmd[1],
                                                    driveCmd[2]))
                 self.rDrv = threading.Thread(target=self.stepper_worker,
                                              args=(self.rightMotor,
-                                                   driveCmd[1],
+                                                   driveCmd[0],
                                                    driveCmd[2]))
                 self.lDrv.start()
                 self.rDrv.start()
