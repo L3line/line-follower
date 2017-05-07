@@ -55,7 +55,7 @@ def posCalc(V, pos):
 
     
 
-def guessVel(target, coord):
+def guessVel(target, coord, bound):
     '''Function returns set of velocities and times in single dimensional array.
        All times are set to 1.
        Function requires single target coordinate, current coordinate and number of steps
@@ -85,8 +85,10 @@ def guessVel(target, coord):
             
     #Step 2
     vel[3] = np.sqrt((target[0]-coord[0])**2+(target[1]-coord[1])**2)
-    if vel[3] > 3:
-              vel[3] = 3
+    if vel[3] > bound[1]:
+        vel[3] = bound[1]
+    if vel[3] < bound[0]:
+        vel[3] = bound[0]
     vel[4] = vel[3]
     
     #Set wheel velocities to move in straight line towards target
@@ -105,8 +107,10 @@ def guessVel(target, coord):
                    
         vel[6] = np.sqrt((target[0]-coord[0])**2+(target[1]-coord[1])**2) 
         
-        if vel[6] > 3:
-            vel[6] = 3
+        if vel[6] > bound[1]:
+            vel[6] = bound[1]
+        if vel[6] < bound[0]:
+            vel[6] = bound[0]
         vel[7] = vel[6]
     else:
         vel[6] = L * (target[2] - travelTheta)/2
@@ -205,8 +209,7 @@ def routeCalculation(targetArray, coord, allbounds, overallSteps):
 #              "\nweighting before step", weighting,
 #              "\nmotions before step", motions)
 
-        vel = guessVel(target, coord)
-        #print("\nVel: ", vel)
+        vel = guessVel(target, coord, allbounds[0])  
         #Produces an good intital guess for motor instructions. See def guessVel()
         result = scipy.optimize.minimize(errorCalc, vel, args=(coord, target, weighting), bounds=allbounds)
 		#Minimise error for moving towards target in 3 (motions) steps	

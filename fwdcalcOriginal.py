@@ -1,7 +1,7 @@
 import numpy as np
 import scipy.optimize
 
-L = 1
+L = 144
 motions = 3 #Do not change this
 tolerance = 0.5
 def posCalc(V, pos):
@@ -149,7 +149,7 @@ def errorCalc(V, current_coord, target, weighting):
         error[2] = error[2] + 2*np.pi
     #Ensure theta error in range -pi to pi          
              
-    weightedTime = 1#0.1*np.sum(vShaped[:,2])*distWeight
+    weightedTime = 0.1*np.sum(vShaped[:,2])*distWeight
     weightedError = np.multiply(error, weighting)
     finalError = np.linalg.norm(weightedError)  + weightedTime
     #Final error withweighted x, y, theta considered and weighted total time. Float                           
@@ -262,19 +262,20 @@ def viewPathPlot(vToMotor, coord, targetArray):
 '''Code Begins Here'''
 #Variable declaration
 
-targetArray = np.array([[1, 1, 0.7], 
+targetArray = np.array([[100, 100, 0.7], 
                         [2, 2, 5], 
                         [1, 3, 0.7]])
 overallSteps = len(targetArray)
                    
 coord = np.array([0.0 ,0.0 ,0.0])
 
-v_bounds = (-3, 3)
-t_bounds = (0, 1)
+v_bounds = (-10., 10.)
+t_bounds = (0, 100)
 allBounds = [v_bounds, v_bounds, t_bounds] * motions
-                    
-weighting = np.array([1,1,0])
-        
+graphBounds = [(-3, 3), (-3, 3)]
+            
+weighting = np.array([1,1,1])
+vel = np.array([1, -1])        
         
 if __name__ == "__main__":
         
