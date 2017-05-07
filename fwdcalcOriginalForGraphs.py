@@ -226,6 +226,7 @@ def routeCalculation(targetArray, coord, allbounds, overallSteps):
         if (result.fun < tolerance) and (pointNo < overallSteps-1):
             pointNo = pointNo + 1
             target = targetArray[pointNo]
+            print("\nTarget reached")
             #If target reached and targets left update target
         elif (result.fun < tolerance) and (pointNo == overallSteps -1):
             pointNo = pointNo + 1
@@ -288,11 +289,11 @@ def viewPathPlot(vToMotor, coord, targetArray):
     
     
     plt.annotate('target 1', xy=(targetArray[0, 0], targetArray[0, 1]),
-                     xytext=(targetArray[0, 0], targetArray[0, 1] + 0.1),
+                     xytext=(targetArray[0, 0], targetArray[0, 1] + 0.5),
                      arrowprops=dict(facecolor='black', shrink=0.1),)
     
     plt.annotate('target 2', xy=(targetArray[1, 0], targetArray[1, 1]),
-                     xytext=(targetArray[1, 0], targetArray[1, 1] + 0.1),
+                     xytext=(targetArray[1, 0], targetArray[1, 1] + 0.5),
                      arrowprops=dict(facecolor='black', shrink=0.1),)
     
     plt.annotate('target 3', xy=(targetArray[2, 0], targetArray[2, 1]),
@@ -303,7 +304,7 @@ def viewPathPlot(vToMotor, coord, targetArray):
 '''Code Begins Here'''
 #Variable declaration
 
-targetArray = np.array([[100, 100, 0.7], 
+targetArray = np.array([[1, 1, 0.7], 
                         [2, 2, 5], 
                         [1, 3, 0.7]])
 overallSteps = len(targetArray)
@@ -311,7 +312,7 @@ overallSteps = len(targetArray)
 coord = np.array([0.0 ,0.0 ,0.0])
 
 v_bounds = (-10., 10.)
-t_bounds = (0, 100)
+t_bounds = (0, 50)
 allBounds = [v_bounds, v_bounds, t_bounds] * motions
 graphBounds = [(-3, 3), (-3, 3)]
             
@@ -324,18 +325,18 @@ if __name__ == "__main__":
       
     vToMotor = routeCalculation(targetArray, coord, allBounds, overallSteps)
     
-#    for i in range(len(targetArray)):
-#        target = targetArray[i]
-#        result = scipy.optimize.minimize(modifiedErrorCalc, vel, args=(coord, target, weighting),
-#                                         bounds = graphBounds)
-#        print(result)
-#        historyForPlot.append(result.x)
-#        print(historyForPlot)
-#    temp = np.array(historyForPlot)  
+    for i in range(len(targetArray)):
+        target = targetArray[i]
+        result = scipy.optimize.minimize(modifiedErrorCalc, vel, args=(coord, target, weighting),
+                                         bounds = graphBounds)
+        print(result)
+        historyForPlot.append(result.x)
+        print(historyForPlot)
+    temp = np.array(historyForPlot)  
                       
     #print("To motor: ",vToMotor)
     
-    #viewHeatMap(coord, targetArray,temp)
+    viewHeatMap(coord, targetArray,temp)
     viewPathPlot(vToMotor, coord, targetArray)
     #print("End")
     
